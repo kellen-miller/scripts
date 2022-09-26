@@ -1,3 +1,5 @@
+#! /bin/zsh
+
 function sysup() {
   if [[ $# -eq 0 ]]; then
     update_brew
@@ -27,33 +29,37 @@ function sysup() {
 }
 
 function update_brew() {
-  echo "Updating Homebrew Packages...\n"
+  printf "Updating Homebrew Packages...\n"
   brew bundle -v --cleanup
-  list_brew
+  outdated=$(brew outdated)
+  if [[ -n $outdated ]]; then
+    echo "$outdated" | awk '{print $1}' | xargs brew install -v
+    brew bundle dump -f --describe
+  fi
 }
 
 function list_brew() {
-  echo "Outdated Homebrew Packages:\n"
+  printf "Outdated Homebrew Packages:\n"
   brew outdated
 }
 
 function update_gcloud() {
-  echo "\nUpdating Google Cloud Components...\n"
+  printf "\nUpdating Google Cloud Components...\n"
   gcloud components update --verbosity=info --quiet
 }
 
 function list_gcloud() {
-  echo "\nOutdated Google Cloud Components:\n"
+  printf "\nOutdated Google Cloud Components:\n"
   gcloud components list --filter="state.name='Installed' AND current_version_string NOT latest_version_string"
 }
 
 function update_macos() {
-   echo "\nUpdating MacOS...\n"
+   printf "\nUpdating MacOS...\n"
    softwareupdate -i -a
 }
 
 function list_macos() {
-  echo "\nOutdated MacOS Packages:\n"
+  printf "\nOutdated MacOS Packages:\n"
   softwareupdate -l
 }
 
