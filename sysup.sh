@@ -1,17 +1,17 @@
-#! /bin/zsh
+#!/bin/zsh
 
 function sysup() {
   if [[ $# -eq 0 ]]; then
-    update_brew
-    update_gcloud
-    update_macos
+    brew_update
+    gcloud_update
+    macos_update
   else
     while [[ $# -gt 0 ]]; do
       case $1 in
         -l|--list)
-          list_brew
-          list_gcloud
-          list_macos
+          brew_list
+          gcloud_list
+          macos_list
           return 0
         ;;
         -h|--help)
@@ -28,18 +28,24 @@ function sysup() {
   fi
 }
 
-function update_brew() {
+function brew_update() {
   printf "### Updating Homebrew Packages ###\n"
-  check_brewfile
+  brew_check
+  brew_dump
   brew bundle -v --cleanup
   outdated=$(brew outdated)
   if [[ -n $outdated ]]; then
     echo "$outdated" | awk '{print $1}' | xargs brew install -v
-    brew bundle dump -f --describe
+    brew_dump
   fi
 }
 
-function check_brewfile() {
+function brew_list() {
+  printf "Outdated Homebrew Packages:\n"
+  brew outdated
+}
+
+function brew_check() {
   createBrewfile=false
   brewfilePath=""
   if [[ -n $HOMEBREW_BUNDLE_FILE ]]; then
@@ -52,7 +58,7 @@ function check_brewfile() {
     fi
   else
     echo "HOMEBREW_BUNDLE_FILE environment variable not set, checking user's directories for .Brewfile..."
-    brewfile=$(find "$HOME" -type f -iname "*.Brewfile" -not -path "$HOME/Library/*" -print -quit)
+    brewfile=$(find "$HOME" -type f -iname "*.Brewfile" -maxdepth 5 -print -quit 2>/dev/null)
     if [[ -n $brewfile ]]; then
       echo ".Brewfile found at $brewfile"
       brewfilePath=$brewfile
@@ -68,31 +74,30 @@ function check_brewfile() {
   if [[ $createBrewfile == true ]]; then
     mkdir -p "$(dirname "$brewfilePath")"
     touch "$brewfilePath"
-    brew bundle dump -f --describe
+    brew_dump
   fi
 }
 
-function list_brew() {
-  printf "Outdated Homebrew Packages:\n"
-  brew outdated
+function brew_dump() {
+  brew bundle dump -f --describe
 }
 
-function update_gcloud() {
+function gcloud_update() {
   printf "\n### Updating Google Cloud Components ###\n"
   gcloud components update --verbosity=info --quiet
 }
 
-function list_gcloud() {
+function gcloud_list() {
   printf "\nOutdated Google Cloud Components:\n"
   gcloud components list --filter="state.name='Installed' AND current_version_string NOT latest_version_string"
 }
 
-function update_macos() {
+function macos_update() {
    printf "\n### Updating MacOS ###\n"
    softwareupdate -i -a
 }
 
-function list_macos() {
+function macos_list() {
   printf "\nOutdated MacOS Packages:\n"
   softwareupdate -l
 }
