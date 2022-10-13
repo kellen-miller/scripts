@@ -1,17 +1,17 @@
 #!/bin/zsh
 
 function sysup() {
-  if [[ $# -eq 0 ]]; then
-    brew_update
+  if [[ $# -eq 0 || (-n $1 && $1 = "--skip-mas") ]]; then
+    brew_update "$@"
     gcloud_update
-    macos_update
+    macOS_update
   else
     while [[ $# -gt 0 ]]; do
       case $1 in
         -l|--list)
           brew_list
           gcloud_list
-          macos_list
+          macOS_list
           return 0
         ;;
         -h|--help)
@@ -31,8 +31,11 @@ function sysup() {
 function brew_update() {
   printf "### Updating Homebrew Packages ###\n"
   brew_check
+  if [[ -n $1 && $1 = "--skip-mas" ]]; then
+    mas_check
+  fi
   brew_dump
-  brew bundle -v --cleanup
+  brew bundle -v
   outdated=$(brew outdated)
   if [[ -n $outdated ]]; then
     echo "$outdated" | awk '{print $1}' | xargs brew install -v
@@ -52,7 +55,7 @@ function brew_check() {
     if [[ -f $HOMEBREW_BUNDLE_FILE ]]; then
       return
     else
-      echo ".Brewfile not found at $HOMEBREW_BUNDLE_FILE, creating one..."
+      echo ".Brewfile not found at $HOMEBREW_BUNDLE_FILE, creating one"
       brewfilePath=$HOMEBREW_BUNDLE_FILE
       createBrewfile=true
     fi
@@ -63,23 +66,31 @@ function brew_check() {
       echo ".Brewfile found at $brewfile"
       brewfilePath=$brewfile
     else
-      echo "No .Brewfile found, creating one at $HOME/.config/homebrew/.Brewfile..."
+      echo "No .Brewfile found, creating one at $HOME/.config/homebrew/.Brewfile"
       brewfilePath="$HOME/.config/homebrew/.Brewfile"
       createBrewfile=true
     fi
     export HOMEBREW_BUNDLE_FILE=$brewfilePath
     echo "Setting HOMEBREW_BUNDLE_FILE to $brewfilePath in .zshrc"
-    printf '$-3i\nexport HOMEBREW_BUNDLE_FILE=%s\n.\nw\n' "$brewfilePath" | ed -s .zshrc
+    printf '$-3i\n%s\n.\nw\n' "export HOMEBREW_BUNDLE_FILE=$brewfilePath" | ed -s .zshrc
   fi
   if [[ $createBrewfile == true ]]; then
     mkdir -p "$(dirname "$brewfilePath")"
     touch "$brewfilePath"
-    brew_dump
   fi
 }
 
 function brew_dump() {
   brew bundle dump -f --describe
+}
+
+function mas_check() {
+  if [[ -z $(command -v mas) ]]; then
+    read -q "REPLY?mas tool not found. mas is used to update Mac App Store apps, do you want to install via brew? [y/N]: "
+    if [[ $REPLY =~ ^[Yy]$ ]]; then
+      brew install mas
+    fi
+  fi
 }
 
 function gcloud_update() {
@@ -92,12 +103,12 @@ function gcloud_list() {
   gcloud components list --filter="state.name='Installed' AND current_version_string NOT latest_version_string"
 }
 
-function macos_update() {
+function macOS_update() {
    printf "\n### Updating MacOS ###\n"
-   softwareupdate -i -a
+   softwareupdate -ia
 }
 
-function macos_list() {
+function macOS_list() {
   printf "\nOutdated MacOS Packages:\n"
   softwareupdate -l
 }
@@ -107,12 +118,13 @@ function print_help() {
   echo "Update system and installed packages"
   echo ""
   echo "Commands run:"
-  echo "  brew bundle -v --cleanup"
+  echo "  brew bundle -v"
   echo "  gcloud components update --verbosity=info --quiet"
-  echo "  softwareupdate -i -a"
+  echo "  softwareupdate -ia"
   echo ""
   echo "Options:"
   echo "  -l, --list    List updates"
+  echo "  --skip-mas    Skips updating Mac App Store apps"
   echo "  -h, --help    Print help"
   echo "  no options    Run all updates"
 }
