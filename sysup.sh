@@ -86,7 +86,7 @@ function brew_dump() {
 
 function mas_check() {
   if [[ -z $(command -v mas) ]]; then
-    read -q "REPLY?mas tool not found. mas is used to update Mac App Store apps, do you want to install via brew? [y/N]: "
+    read -q "REPLY?mas tool not found. mas is used to update Mac App Store apps, do you want to install via brew? [y/n]: "
     if [[ $REPLY =~ ^[Yy]$ ]]; then
       brew install mas
     fi
@@ -105,7 +105,7 @@ function gcloud_list() {
 
 function macOS_update() {
    printf "\n### Updating MacOS ###\n"
-   softwareupdate -ia
+   softwareupdate -ia --agree-to-license --force --verbose
 }
 
 function macOS_list() {
@@ -117,10 +117,10 @@ function print_help() {
   echo "Usage: sysup [OPTION]"
   echo "Update system and installed packages"
   echo ""
-  echo "Commands run:"
+  echo "Commands sysup runs:"
   echo "  brew bundle -v"
   echo "  gcloud components update --verbosity=info --quiet"
-  echo "  softwareupdate -ia"
+  echo "  softwareupdate -ia --agree-to-license --force --verbose"
   echo ""
   echo "Options:"
   echo "  -l, --list    List updates"
