@@ -29,7 +29,7 @@ function sysup() {
 }
 
 function brew_update() {
-  printf "### Updating Homebrew Packages ###\n"
+  printf "\n### Updating Homebrew Packages ###\n"
   brew_check
   if [[ -n $1 && $1 = "--skip-mas" ]]; then
     mas_check
@@ -94,7 +94,7 @@ function mas_check() {
 }
 
 function gcloud_update() {
-  printf "\n### Updating Google Cloud Components ###\n"
+  printf "\n\n### Updating Google Cloud Components ###\n"
   gcloud components update --verbosity=info --quiet
 }
 
@@ -104,7 +104,7 @@ function gcloud_list() {
 }
 
 function macOS_update() {
-   printf "\n### Updating MacOS ###\n"
+   printf "\n\n### Updating MacOS ###\n"
    softwareupdate -ia --agree-to-license --force --verbose
 }
 
