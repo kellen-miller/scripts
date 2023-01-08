@@ -1,6 +1,6 @@
 #!/bin/zsh
 
-function sysup() {
+function su() {
   if [[ $# -eq 0 || (-n $1 && $1 = "--skip-mas") ]]; then
     brew_update "$@"
     gcloud_update
