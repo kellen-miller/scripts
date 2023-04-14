@@ -3,6 +3,8 @@
 function su() {
   if [[ $# -eq 0 || (-n $1 && $1 = "--skip-mas") ]]; then
     brew_update "$@"
+    rust_update
+    pecl_update
     gcloud_update
     macOS_update
   else
@@ -111,6 +113,17 @@ function macOS_update() {
 function macOS_list() {
   printf "\nOutdated MacOS Packages:\n"
   softwareupdate -l
+}
+
+function rust_update() {
+  printf "\n\n### Updating Rust ###\n"
+  rustup update
+}
+
+function pecl_update() {
+  printf "\n\n### Updating PECL Packages ###\n"
+  sudo pecl update-channels
+  sudo pecl upgrade
 }
 
 function print_help() {
